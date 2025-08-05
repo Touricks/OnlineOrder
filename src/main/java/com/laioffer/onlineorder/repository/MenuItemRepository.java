@@ -10,6 +10,5 @@ import java.util.List;
 
 public interface MenuItemRepository extends ListCrudRepository<MenuItemEntity, Long> {
 
-
     List<MenuItemEntity> getByRestaurantId(Long restaurantId);
 }

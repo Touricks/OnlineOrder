@@ -7,6 +7,7 @@ import com.laioffer.onlineorder.model.MenuItemDto;
 import com.laioffer.onlineorder.model.RestaurantDto;
 import com.laioffer.onlineorder.repository.MenuItemRepository;
 import com.laioffer.onlineorder.repository.RestaurantRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 
@@ -31,16 +32,20 @@ public class RestaurantService {
         this.menuItemRepository = menuItemRepository;
     }
 
-
+    @Cacheable("restaurants")
     public List<RestaurantDto> getRestaurants() {
         List<RestaurantEntity> restaurantEntities = restaurantRepository.findAll();
         List<MenuItemEntity> menuItemEntities = menuItemRepository.findAll();
         Map<Long, List<MenuItemDto>> groupedMenuItems = new HashMap<>();
         for (MenuItemEntity menuItemEntity : menuItemEntities) {
-            List<MenuItemDto> group = groupedMenuItems.computeIfAbsent(menuItemEntity.restaurantId(), k -> new ArrayList<>());
+            Long restaurantId = menuItemEntity.restaurantId();
+            List<MenuItemDto> group = groupedMenuItems.get(restaurantId);
+            if (group == null) {
+                group = new ArrayList<>();
+                groupedMenuItems.put(restaurantId, group);
+            }
             MenuItemDto menuItemDto = new MenuItemDto(menuItemEntity);
             group.add(menuItemDto);
-
         }
         List<RestaurantDto> results = new ArrayList<>();
         for (RestaurantEntity restaurantEntity : restaurantEntities) {
